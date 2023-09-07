@@ -1,8 +1,8 @@
-
+import ExchangeForm from "@components/ExchangeForm"
 
 const Home = () => {
   return (
-    <div>main view</div>
+    <ExchangeForm />
   )
 }
 
