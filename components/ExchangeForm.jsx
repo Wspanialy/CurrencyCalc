@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import Summary from "./Summary";
+import { fetchCurrencies } from "./FetchCurrencies";
+import { renderCurrencyOptions } from "./CurrencyOptionsRender";
 
 const ExchangeForm = () => {
   const [currencyAmount, setCurrencyAmount] = useState('');
@@ -11,16 +13,15 @@ const ExchangeForm = () => {
   const [currencies, setCurrencies] = useState({});
 
   useEffect(() => {
-    const fetchCurrencies = async () => {
+    const getCurrencies = async () => {
       try {
-        const response = await fetch(`https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies.json`);
-        const data = await response.json();
-        setCurrencies(data);
+        const response = await fetchCurrencies();
+        setCurrencies(response);
       } catch (error) {
         console.error("Error fetching currencies:", error);
       }
     };
-    fetchCurrencies();
+    getCurrencies();
   }, []);
 
   const fetchCurrencyData = async () => {
@@ -42,13 +43,6 @@ const ExchangeForm = () => {
     }
   }
 
-  const renderCurrencyOptions = () => {
-    return Object.entries(currencies).map(([currencyCode, currencyName]) => (
-      <option key={currencyCode} value={currencyCode}>
-        {currencyName}
-      </option>
-    ));
-  }
 
   return (
     <div className="flex flex-col items-center p-4 md:p-8">
@@ -73,7 +67,7 @@ const ExchangeForm = () => {
               className="border-2 border-gray-300 rounded p-2 w-full"
               onChange={e => setCurrency(e.target.value)}
             >
-              {renderCurrencyOptions()}
+              {renderCurrencyOptions(currencies)}
             </select>
           </div>
           <div className="mb-4">
@@ -84,7 +78,7 @@ const ExchangeForm = () => {
               className="border-2 border-gray-300 rounded p-2 w-full"
               onChange={e => setToCurrency(e.target.value)}
             >
-              {renderCurrencyOptions()}
+              {renderCurrencyOptions(currencies)}
             </select>
           </div>
           <button type="submit" className="bg-green-600 text-white font-bold rounded-lg p-2 hover:bg-green-800 w-full">
