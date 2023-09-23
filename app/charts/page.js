@@ -5,7 +5,7 @@ const Charts = () => {
     <>
 
     <ChartForm />
-    <Chart />
+
 
     
     </>

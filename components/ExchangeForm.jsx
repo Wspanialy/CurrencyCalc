@@ -1,16 +1,18 @@
 'use client';
 
 import React, { useState, useEffect } from "react";
-import Summary from "./Summary";
-import { fetchCurrencies } from "./FetchCurrencies";
+import Chart from "./Chart";
 import { renderCurrencyOptions } from "./CurrencyOptionsRender";
+import { fetchCurrencies } from "./FetchCurrencies";
 
-const ExchangeForm = () => {
-  const [currencyAmount, setCurrencyAmount] = useState('');
-  const [currency, setCurrency] = useState('');
-  const [toCurrency, setToCurrency] = useState('');
-  const [currencyData, setCurrencyData] = useState(null);
+const ChartForm = () => {
+  const [currency, setCurrency] = useState("");
   const [currencies, setCurrencies] = useState({});
+  const [toCurrency, setToCurrency] = useState("");
+  const [currencyData, setCurrencyData] = useState(null);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const getCurrencies = async () => {
@@ -18,84 +20,127 @@ const ExchangeForm = () => {
         const response = await fetchCurrencies();
         setCurrencies(response);
       } catch (error) {
-        console.error("Error fetching currencies:", error);
+        console.error("Błąd podczas pobierania walut:", error);
       }
     };
     getCurrencies();
   }, []);
 
-  const fetchCurrencyData = async () => {
+  const fetchChartData = async (date) => {
     try {
-      const response = await fetch(`https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/${currency}/${toCurrency}.json`);
+      const formattedDate = date.toISOString().split("T")[0];
+      const response = await fetch(
+        `https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/${formattedDate}/currencies/${currency}/${toCurrency}.json`
+      );
       const data = await response.json();
-      setCurrencyData(data);
+      return data;
     } catch (error) {
-      console.error("Error fetching currency data:", error);
+      console.error("Error fetching currencies:", error);
+      return null;
     }
-  }
+  };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    if (!currencyAmount || isNaN(currencyAmount) || parseFloat(currencyAmount) <= 0) {
-      alert("Please enter a valid currency amount.");
+    const fromDate = new Date(dateFrom);
+    const toDate = new Date(dateTo);
+
+    if (!isNaN(fromDate.getTime()) && !isNaN(toDate.getTime())) {
+      setIsLoading(true);
+      const datesToFetch = [];
+      const currentDate = new Date(fromDate);
+
+      while (currentDate <= toDate) {
+        datesToFetch.push(new Date(currentDate));
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
+      const fetchDataPromises = datesToFetch.map(async (date) => {
+        return await fetchChartData(date);
+      });
+
+      Promise.all(fetchDataPromises)
+        .then((dataArray) => {
+          console.log(dataArray);
+          setCurrencyData(dataArray);
+        })
+        .catch((error) => {
+          console.error("Error fetching currencies:", error);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
     } else {
-      fetchCurrencyData();
+      console.error("Wrong dates!");
     }
-  }
+  };
 
 
   return (
     <div className="flex flex-col items-center p-4 md:p-8">
       {currencies && (
-        <form className="w-full md:w-2/3 lg:w-1/2 xl:w-1/3 mx-auto bg-white p-4 rounded-lg shadow-lg" onSubmit={handleSubmit}>
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white p-4 rounded-lg shadow-lg w-full md:w-2/3 lg:w-1/2 xl:w-1/3 mx-auto"
+        >
+          <label htmlFor="currency" className="block text-gray-600 font-semibold">
+            Choose currency:
+          </label>
           <div className="mb-4">
-            <label htmlFor="currencyAmount" className="block text-gray-600 font-semibold">Your money:</label>
-            <input
-              type="number"
-              id="currencyAmount"
-              className="border-2 border-gray-300 rounded p-2 w-full"
-              required
-              value={currencyAmount}
-              onChange={e => setCurrencyAmount(e.target.value)}
-            />
-          </div>
-          <div className="mb-4">
-            <label htmlFor="currency" className="block text-gray-600 font-semibold">Choose your currency:</label>
             <select
               id="currency"
               value={currency}
               className="border-2 border-gray-300 rounded p-2 w-full"
-              onChange={e => setCurrency(e.target.value)}
+              onChange={(e) => setCurrency(e.target.value)}
             >
               {renderCurrencyOptions(currencies)}
             </select>
           </div>
           <div className="mb-4">
-            <label htmlFor="toCurrency" className="block text-gray-600 font-semibold">To which currency you want to exchange?</label>
             <select
               id="toCurrency"
               value={toCurrency}
               className="border-2 border-gray-300 rounded p-2 w-full"
-              onChange={e => setToCurrency(e.target.value)}
+              onChange={(e) => setToCurrency(e.target.value)}
             >
               {renderCurrencyOptions(currencies)}
             </select>
           </div>
-          <button type="submit" className="bg-green-600 text-white font-bold rounded-lg p-2 hover:bg-green-800 w-full">
-            Check
+          <input
+            type="date"
+            id="date-from"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="border-2 border-gray-300 rounded p-2 w-full mt-1"
+          />
+          <input
+            type="date"
+            id="date-to"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="border-2 border-gray-300 rounded p-2 w-full mt-2"
+          />
+          <button
+            type="submit"
+            className="bg-green-600 text-white font-bold rounded-lg p-2 hover:bg-green-800 w-full mt-4"
+          >
+            Generate Chart
           </button>
         </form>
       )}
+
+      {/* Wyświetl komponent Chart, jeśli dane są dostępne */}
       {currencyData && (
-        <Summary
-          currencyAmount={currencyAmount}
+        <Chart
+          currencyData={currencyData}
           currency={currency}
           toCurrency={toCurrency}
-          currencyData={currencyData}
+          datesToFetch={datesToFetch}
         />
       )}
     </div>
-  )
-}
+  );
+};
 
-export default ExchangeForm;
+export default ChartForm;
+
