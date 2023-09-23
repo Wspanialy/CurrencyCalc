@@ -12,7 +12,7 @@ const ChartForm = () => {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [datesToFetch, setDatesToFetch] = useState([]); // Dodajemy stan dla datesToFetch
+  const [datesToFetch, setDatesToFetch] = useState([]);
 
   useEffect(() => {
     const getCurrencies = async () => {
@@ -55,7 +55,7 @@ const ChartForm = () => {
         currentDate.setDate(currentDate.getDate() + 1);
       }
 
-      setDatesToFetch(datesToFetch); // Ustawiamy datesToFetch w stanie komponentu
+      setDatesToFetch(datesToFetch);
 
       const fetchDataPromises = datesToFetch.map(async (date) => {
         return await fetchChartData(date);
