@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { renderCurrencyOptions } from "./CurrencyOptionsRender";
 import { fetchCurrencies } from "./FetchCurrencies";
+import Chart from "./Chart";
 
 const ChartForm = () => {
   const [currency, setCurrency] = useState("");
@@ -128,6 +129,9 @@ const ChartForm = () => {
             Generate Chart
           </button>
         </form>
+      )}
+      {!isLoading &&(
+      <Chart data = {currencyData} currencyLabel = {toCurrency} />
       )}
     </div>
   );
